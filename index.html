@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ترتيب أحياء سيدي مومن | Sidi Moumen Ranking</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,10 +12,12 @@
   <header>
     <div class="container">
       <div class="header-content">
-        <div class="logo">🌟</div>
+        <div class="logo">
+          <i class="fas fa-chart-bar"></i>
+        </div>
         <div class="header-title">
           <h1>ترتيب أحياء سيدي مومن</h1>
-          <p>منصة تفاعلية عصرية لتقييم وترتيب أحياء المنطقة</p>
+          <p>منصة تفاعلية احترافية لتقييم وترتيب أحياء المنطقة</p>
         </div>
       </div>
     </div>
@@ -25,17 +28,17 @@
     <!-- Stats Grid -->
     <div class="stats-section" id="statsGrid">
       <div class="stat-card gradient-purple">
-        <div class="stat-icon">🗳️</div>
+        <div class="stat-icon"><i class="fas fa-list-ol"></i></div>
         <div class="stat-value" id="totalVotes">0</div>
         <div class="stat-label">إجمالي الأصوات</div>
       </div>
       <div class="stat-card gradient-blue">
-        <div class="stat-icon">🏘️</div>
+        <div class="stat-icon"><i class="fas fa-city"></i></div>
         <div class="stat-value" id="totalNeighborhoods">19</div>
         <div class="stat-label">عدد الأحياء</div>
       </div>
       <div class="stat-card gradient-cyan">
-        <div class="stat-icon">📊</div>
+        <div class="stat-icon"><i class="fas fa-chart-pie"></i></div>
         <div class="stat-value" id="avgVotes">0</div>
         <div class="stat-label">متوسط الأصوات</div>
       </div>
@@ -46,15 +49,15 @@
       <!-- Leaderboard -->
       <section class="leaderboard-section">
         <div class="section-header">
-          <h2 class="section-title">🏆 ترتيب الأحياء</h2>
-          <button class="reset-btn" onclick="resetVotes()">⟲ إعادة تعيين</button>
+          <h2 class="section-title"><i class="fas fa-trophy"></i> ترتيب الأحياء</h2>
+          <button class="reset-btn" onclick="resetVotes()"><i class="fas fa-redo"></i> إعادة تعيين</button>
         </div>
         <div id="leaderboard" class="loading">جاري تحميل البيانات...</div>
       </section>
 
       <!-- Vote Form -->
       <aside class="vote-form-section">
-        <h2 class="section-title">⭐ صوّت للحي المفضل</h2>
+        <h2 class="section-title"><i class="fas fa-star"></i> صوّت للحي المفضل</h2>
         <div id="voteMessage"></div>
         
         <div id="voteStatus" class="vote-status">
@@ -63,23 +66,23 @@
         
         <form id="voteForm">
           <div class="form-group">
-            <label for="voteNeighborhood">💎 اختر حيك المفضل:</label>
+            <label for="voteNeighborhood"><i class="fas fa-gem"></i> اختر حيك المفضل:</label>
             <select id="voteNeighborhood" required>
               <option value="">-- اختر الحي --</option>
             </select>
           </div>
 
-          <button type="submit" class="btn-vote">✨ صوّت الآن</button>
+          <button type="submit" class="btn-vote"><i class="fas fa-check"></i> صوّت الآن</button>
         </form>
 
         <!-- Share Section -->
         <div class="share-section">
-          <h3 class="section-title" style="font-size: 16px;">📢 شارك النتائج</h3>
+          <h3 class="section-title" style="font-size: 16px;"><i class="fas fa-share-alt"></i> شارك النتائج</h3>
           <div class="share-buttons">
-            <button class="share-btn twitter" onclick="shareOnTwitter()">𝕏</button>
-            <button class="share-btn whatsapp" onclick="shareOnWhatsApp()">💬</button>
-            <button class="share-btn facebook" onclick="shareOnFacebook()">f</button>
-            <button class="share-btn copy" onclick="copyLink()">📋</button>
+            <button class="share-btn twitter" onclick="shareOnTwitter()" title="تويتر"><i class="fab fa-twitter"></i></button>
+            <button class="share-btn facebook" onclick="shareOnFacebook()" title="فيسبوك"><i class="fab fa-facebook"></i></button>
+            <button class="share-btn whatsapp" onclick="shareOnWhatsApp()" title="واتس آب"><i class="fab fa-whatsapp"></i></button>
+            <button class="share-btn copy" onclick="copyLink()" title="نسخ الرابط"><i class="fas fa-link"></i></button>
           </div>
         </div>
       </aside>
@@ -88,7 +91,7 @@
 
   <!-- Footer -->
   <footer>
-    <p>✨ منصة احترافية لأحياء سيدي مومن | صُنعت بـ 💙 من قبل المجتمع</p>
+    <p><i class="fas fa-sparkles"></i> منصة احترافية لأحياء سيدي مومن | صُنعت بـ <i class="fas fa-heart"></i> من قبل المجتمع</p>
     <p style="margin-top: 10px; font-size: 12px; opacity: 0.8;">© 2026 جميع الحقوق محفوظة</p>
   </footer>
 

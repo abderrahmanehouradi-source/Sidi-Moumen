@@ -12,7 +12,7 @@ let deviceId = generateDeviceId();
 let hasVoted = false;
 let userVote = null;
 
-// توليد معرف فريد للجهاز
+// توليد معرّف فريد للجهاز
 function generateDeviceId() {
   let id = localStorage.getItem('deviceId');
   if (!id) {
@@ -91,8 +91,8 @@ function displayLeaderboard(leaderboard) {
   }
 
   leaderboardElement.innerHTML = leaderboard.map((item, index) => {
-    const medals = ['🥇', '🥈', '🥉'];
-    const medal = medals[index] || `${index + 1}`;
+    const medals = ['1', '2', '3'];
+    const medal = index < 3 ? medals[index] : `${index + 1}`;
     const topClass = index < 3 ? `top-${index + 1}` : '';
     const highlight = userVote === item.name ? ' highlight' : '';
     
@@ -137,7 +137,7 @@ async function handleVote(e) {
   e.preventDefault();
 
   if (hasVoted) {
-    showMessage('❌ لقد صوّت الجهاز الحالي مسبقاً', 'error');
+    showMessage('لقد صوّت الجهاز الحالي مسبقاً', 'error');
     return;
   }
 
@@ -145,12 +145,13 @@ async function handleVote(e) {
   const submitButton = e.target.querySelector('.btn-vote');
 
   if (!voteNeighborhood) {
-    showMessage('❌ يرجى اختيار حي', 'error');
+    showMessage('يرجى اختيار حي', 'error');
     return;
   }
 
   submitButton.disabled = true;
-  submitButton.textContent = '⏳ جاري المعالجة...';
+  const originalText = submitButton.innerHTML;
+  submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
 
   try {
     // محاكاة تأخير
@@ -170,7 +171,7 @@ async function handleVote(e) {
     votesData[deviceId] = voteNeighborhood;
     localStorage.setItem('votesData', JSON.stringify(votesData));
 
-    showMessage(`✨ شكراً! تم تصويتك للحي: ${voteNeighborhood}`, 'success');
+    showMessage(`شكراً! تم تصويتك للحي: ${voteNeighborhood}`, 'success');
     
     // تحديث الترتيب والإحصائيات
     loadLeaderboard();
@@ -182,10 +183,10 @@ async function handleVote(e) {
     document.getElementById('voteForm').reset();
   } catch (error) {
     console.error('خطأ في التصويت:', error);
-    showMessage('❌ حدث خطأ في عملية التصويت. حاول مرة أخرى', 'error');
+    showMessage('حدث خطأ في عملية التصويت. حاول مرة أخرى', 'error');
   } finally {
     submitButton.disabled = false;
-    submitButton.textContent = '✨ صوّت الآن';
+    submitButton.innerHTML = originalText;
   }
 }
 
@@ -196,7 +197,7 @@ function updateVoteStatus() {
   
   if (hasVoted) {
     voteStatus.classList.add('voted');
-    statusText.textContent = `✅ صوّتت على: ${userVote}`;
+    statusText.textContent = `صوتت على: ${userVote}`;
   } else {
     voteStatus.classList.remove('voted');
     statusText.textContent = 'لم تصوّت بعد';
@@ -208,11 +209,11 @@ function updateVoteButtonState() {
   const submitButton = document.querySelector('.btn-vote');
   if (hasVoted) {
     submitButton.disabled = true;
-    submitButton.textContent = '🔒 صوتك محفوظ';
+    submitButton.innerHTML = '<i class="fas fa-lock"></i> صوتك محفوظ';
     submitButton.style.opacity = '0.6';
   } else {
     submitButton.disabled = false;
-    submitButton.textContent = '✨ صوّت الآن';
+    submitButton.innerHTML = '<i class="fas fa-check"></i> صوّت الآن';
     submitButton.style.opacity = '1';
   }
 }
@@ -245,7 +246,7 @@ function loadStats() {
 
 // إعادة تعيين (للمسؤولين فقط)
 function resetVotes() {
-  if (confirm('⚠️ هل أنت متأكد من إعادة تعيين جميع البيانات؟')) {
+  if (confirm('هل أنت متأكد من إعادة تعيين جميع البيانات؟')) {
     localStorage.clear();
     deviceId = generateDeviceId();
     hasVoted = false;
@@ -255,7 +256,7 @@ function resetVotes() {
     loadStats();
     updateVoteStatus();
     updateVoteButtonState();
-    showMessage('✅ تم إعادة تعيين جميع البيانات', 'success');
+    showMessage('تم إعادة تعيين جميع البيانات', 'success');
   }
 }
 
@@ -264,17 +265,8 @@ function shareOnTwitter() {
   const topNeighborhood = leaderboardData[0];
   if (!topNeighborhood) return;
 
-  const text = `🏆 حي ${topNeighborhood.name} متصدر ترتيب أحياء سيدي مومن برصيد ${topNeighborhood.votes} صوت! \n\nصوّت الآن: ${window.location.href}`;
+  const text = `حي ${topNeighborhood.name} متصدر ترتيب أحياء سيدي مومن برصيد ${topNeighborhood.votes} صوت!\n\nصوّت الآن: ${window.location.href}`;
   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
-}
-
-// مشاركة على واتس أب
-function shareOnWhatsApp() {
-  const topNeighborhood = leaderboardData[0];
-  if (!topNeighborhood) return;
-
-  const message = `🏆 حي ${topNeighborhood.name} متصدر ترتيب أحياء سيدي مومن برصيد ${topNeighborhood.votes} صوت!\n\nصوّت الآن: ${window.location.href}`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
 }
 
 // مشاركة على فيسبوك
@@ -282,14 +274,23 @@ function shareOnFacebook() {
   window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
 }
 
+// مشاركة على واتس آب
+function shareOnWhatsApp() {
+  const topNeighborhood = leaderboardData[0];
+  if (!topNeighborhood) return;
+
+  const message = `حي ${topNeighborhood.name} متصدر ترتيب أحياء سيدي مومن برصيد ${topNeighborhood.votes} صوت!\n\nصوّت الآن: ${window.location.href}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+}
+
 // نسخ الرابط
 function copyLink() {
   navigator.clipboard.writeText(window.location.href).then(() => {
     const topNeighborhood = leaderboardData[0];
     if (topNeighborhood) {
-      showMessage(`✅ تم نسخ الرابط! حي ${topNeighborhood.name} متصدر الترتيب 🏆`, 'success');
+      showMessage(`تم نسخ الرابط! حي ${topNeighborhood.name} متصدر الترتيب`, 'success');
     }
   }).catch(() => {
-    showMessage('❌ فشل نسخ الرابط', 'error');
+    showMessage('فشل نسخ الرابط', 'error');
   });
 }
