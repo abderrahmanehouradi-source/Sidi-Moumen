@@ -5,33 +5,55 @@ const neighborhoods = [
   'مبروكة', 'السعادة', 'الشراف', 'الهدى', 'عبير', 'الكرون', 'سيدي مومن القديم'
 ];
 
-// المتغيرات العامة
+// بيانات الأحياء (محلياً)
+let neighborhoodsData = {};
 let leaderboardData = [];
-let allNeighborhoodsIds = {};
+
+// تهيئة البيانات المحلية
+function initializeLocalData() {
+  const stored = localStorage.getItem('neighborhoodsData');
+  
+  if (!stored) {
+    neighborhoods.forEach((neighborhood, index) => {
+      neighborhoodsData[neighborhood] = {
+        name: neighborhood,
+        votes: Math.floor(Math.random() * 50) + 1
+      };
+    });
+    saveLocalData();
+  } else {
+    neighborhoodsData = JSON.parse(stored);
+  }
+}
+
+// حفظ البيانات محلياً
+function saveLocalData() {
+  localStorage.setItem('neighborhoodsData', JSON.stringify(neighborhoodsData));
+}
 
 // تحميل البيانات عند فتح الصفحة
 document.addEventListener('DOMContentLoaded', () => {
+  initializeLocalData();
   loadLeaderboard();
   loadNeighborhoodsList();
   loadStats();
   setupEventListeners();
   
-  // تحديث الترتيب كل 5 ثوانٍ
-  setInterval(loadLeaderboard, 5000);
+  // تحديث الترتيب كل 3 ثوانٍ
+  setInterval(() => {
+    loadLeaderboard();
+    loadStats();
+  }, 3000);
 });
 
 // تحميل الترتيب
-async function loadLeaderboard() {
+function loadLeaderboard() {
   try {
-    const response = await fetch('/api/neighborhoods/leaderboard');
-    const data = await response.json();
-
-    if (data.success) {
-      leaderboardData = data.data;
-      displayLeaderboard(data.data);
-    }
+    const sorted = Object.values(neighborhoodsData).sort((a, b) => b.votes - a.votes);
+    leaderboardData = sorted;
+    displayLeaderboard(sorted);
   } catch (error) {
-    console.error('خطأ في جلب الترتيب:', error);
+    console.error('خطأ في تحميل الترتيب:', error);
   }
 }
 
@@ -44,51 +66,41 @@ function displayLeaderboard(leaderboard) {
     return;
   }
 
-  leaderboardElement.innerHTML = leaderboard.map((item, index) => `
-    <div class="leaderboard-item ${index === 0 ? 'top-1' : index === 1 ? 'top-2' : index === 2 ? 'top-3' : ''}">
-      <div class="rank-medal">${item.medal || (index + 1)}</div>
-      <div class="neighborhood-name">${item.name}</div>
-      <div class="vote-count">${item.votes} 🗳️</div>
-    </div>
-  `).join('');
+  leaderboardElement.innerHTML = leaderboard.map((item, index) => {
+    const medals = ['🥇', '🥈', '🥉'];
+    const medal = medals[index] || `${index + 1}`;
+    const topClass = index < 3 ? `top-${index + 1}` : '';
+    
+    return `
+      <div class="leaderboard-item ${topClass}">
+        <div class="rank-medal">${medal}</div>
+        <div class="neighborhood-name">${item.name}</div>
+        <div class="vote-count">${item.votes} 🗳️</div>
+      </div>
+    `;
+  }).join('');
 }
 
 // تحميل قائمة الأحياء
-async function loadNeighborhoodsList() {
-  try {
-    const response = await fetch('/api/neighborhoods/list');
-    const data = await response.json();
-
-    if (data.success) {
-      populateSelects(data.data);
-    }
-  } catch (error) {
-    console.error('خطأ في جلب الأحياء:', error);
-    // الخطة البديلة: استخدا�� القائمة المحلية
-    populateSelectsLocal();
-  }
+function loadNeighborhoodsList() {
+  populateSelects();
 }
 
-// ملء القائمات المحلية
-function populateSelectsLocal() {
+// ملء القائمات
+function populateSelects() {
   const residenceSelect = document.getElementById('residenceNeighborhood');
   const voteSelect = document.getElementById('voteNeighborhood');
 
   neighborhoods.forEach(neighborhood => {
-    residenceSelect.innerHTML += `<option value="${neighborhood}">${neighborhood}</option>`;
-    voteSelect.innerHTML += `<option value="${neighborhood}">${neighborhood}</option>`;
-  });
-}
-
-// ملء القائمات من الخادم
-function populateSelects(data) {
-  const residenceSelect = document.getElementById('residenceNeighborhood');
-  const voteSelect = document.getElementById('voteNeighborhood');
-
-  data.forEach(item => {
-    allNeighborhoodsIds[item.name] = item._id;
-    residenceSelect.innerHTML += `<option value="${item._id}">${item.name}</option>`;
-    voteSelect.innerHTML += `<option value="${item._id}">${item.name}</option>`;
+    const option1 = document.createElement('option');
+    option1.value = neighborhood;
+    option1.textContent = neighborhood;
+    residenceSelect.appendChild(option1);
+    
+    const option2 = document.createElement('option');
+    option2.value = neighborhood;
+    option2.textContent = neighborhood;
+    voteSelect.appendChild(option2);
   });
 }
 
@@ -102,47 +114,37 @@ function setupEventListeners() {
 async function handleVote(e) {
   e.preventDefault();
 
-  const neighborhoodId = document.getElementById('voteNeighborhood').value;
-  const recaptchaResponse = grecaptcha.getResponse();
+  const residenceNeighborhood = document.getElementById('residenceNeighborhood').value;
+  const voteNeighborhood = document.getElementById('voteNeighborhood').value;
+  const submitButton = e.target.querySelector('.btn-vote');
 
-  if (!recaptchaResponse) {
-    showMessage('يرجى تأكيد أنك لست روبوت', 'error');
+  if (!residenceNeighborhood || !voteNeighborhood) {
+    showMessage('يرجى اختيار الأحياء', 'error');
     return;
   }
 
-  const submitButton = e.target.querySelector('.btn-vote');
   submitButton.disabled = true;
   submitButton.textContent = 'جاري المعالجة...';
 
   try {
-    const response = await fetch('/api/votes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        neighborhoodId: neighborhoodId,
-        recaptchaToken: recaptchaResponse
-      })
-    });
+    // محاكاة التأخير
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-    const data = await response.json();
-
-    if (data.success) {
-      showMessage('✅ تم التصويت بنجاح! شكراً لك', 'success');
-      
-      // تحديث الترتيب مباشرة
-      if (data.leaderboard) {
-        displayLeaderboard(data.leaderboard);
-      }
-
-      // إعادة تعيين النموذج
-      document.getElementById('voteForm').reset();
-      grecaptcha.reset();
-      loadStats();
-    } else {
-      showMessage(`❌ ${data.message}`, 'error');
+    // إضافة صوت
+    if (!neighborhoodsData[voteNeighborhood]) {
+      neighborhoodsData[voteNeighborhood] = { name: voteNeighborhood, votes: 0 };
     }
+    neighborhoodsData[voteNeighborhood].votes += 1;
+    saveLocalData();
+
+    showMessage('✅ تم التصويت بنجاح! شكراً لك 🎉', 'success');
+    
+    // تحديث الترتيب مباشرة
+    loadLeaderboard();
+    loadStats();
+
+    // إعادة تعيين النموذج
+    document.getElementById('voteForm').reset();
   } catch (error) {
     console.error('خطأ في التصويت:', error);
     showMessage('حدث خطأ في عملية التصويت. حاول مرة أخرى', 'error');
@@ -159,33 +161,20 @@ function showMessage(message, type) {
   messageElement.className = `message ${type}`;
   
   setTimeout(() => {
-    messageElement.className = 'message';
+    messageElement.className = '';
   }, 5000);
 }
 
 // تحميل الإحصائيات
-async function loadStats() {
+function loadStats() {
   try {
-    const response = await fetch('/api/votes/stats/total');
-    const data = await response.json();
+    const totalVotes = Object.values(neighborhoodsData).reduce((sum, item) => sum + item.votes, 0);
+    const totalNeighborhoods = neighborhoods.length;
+    const avgVotes = totalNeighborhoods > 0 ? Math.round(totalVotes / totalNeighborhoods * 10) / 10 : 0;
 
-    if (data.success) {
-      const statsGrid = document.getElementById('statsGrid');
-      statsGrid.innerHTML = `
-        <div class="stat-card">
-          <div class="stat-value">${data.totalVotes}</div>
-          <div class="stat-label">إجمالي الأصوات</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${data.totalNeighborhoods}</div>
-          <div class="stat-label">عدد الأحياء</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${data.avgVotesPerNeighborhood}</div>
-          <div class="stat-label">متوسط الأصوات</div>
-        </div>
-      `;
-    }
+    document.getElementById('totalVotes').textContent = totalVotes;
+    document.getElementById('totalNeighborhoods').textContent = totalNeighborhoods;
+    document.getElementById('avgVotes').textContent = avgVotes;
   } catch (error) {
     console.error('خطأ في جلب الإحصائيات:', error);
   }

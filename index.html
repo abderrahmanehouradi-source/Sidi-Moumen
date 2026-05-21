@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ترتيب أحياء سيدي مومن | Sidi Moumen Ranking</title>
-  <link rel="stylesheet" href="/css/style.css">
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <!-- Header -->
@@ -26,15 +25,15 @@
     <!-- Stats Grid -->
     <div class="stats-section" id="statsGrid">
       <div class="stat-card">
-        <div class="stat-value">-</div>
+        <div class="stat-value" id="totalVotes">0</div>
         <div class="stat-label">إجمالي الأصوات</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">-</div>
+        <div class="stat-value" id="totalNeighborhoods">19</div>
         <div class="stat-label">عدد الأحياء</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value">-</div>
+        <div class="stat-value" id="avgVotes">0</div>
         <div class="stat-label">متوسط الأصوات</div>
       </div>
     </div>
@@ -66,18 +65,11 @@
             </select>
           </div>
 
-          <!-- reCAPTCHA -->
-          <div class="form-group">
-            <div class="g_recaptcha_badge" data-sitekey="YOUR_RECAPTCHA_SITE_KEY">
-              <div class="g_recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div>
-            </div>
-          </div>
-
           <button type="submit" class="btn-vote">صوّت الآن 🗳️</button>
         </form>
 
         <!-- Share Section -->
-        <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #f0f0f0;">
+        <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e5e7eb;">
           <h3 class="section-title" style="font-size: 16px;">📢 شارك النتائج</h3>
           <div class="share-buttons">
             <button class="share-btn twitter" onclick="shareOnTwitter()">𝕏</button>
@@ -96,6 +88,6 @@
     <p style="margin-top: 10px; font-size: 12px; opacity: 0.8;">© 2026 جميع الحقوق محفوظة</p>
   </footer>
 
-  <script src="/js/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
