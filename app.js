@@ -5,15 +5,18 @@ const neighborhoods = [
   'مبروكة', 'السعادة', 'الشراف', 'الهدى', 'عبير', 'الكرون', 'سيدي مومن القديم'
 ];
 
-// المتغيرات العامة
-let neighborhoodsData = {};
+const RANK_ICONS = [
+  { icon: 'fa-crown',  label: '1' },
+  { icon: 'fa-trophy', label: '2' },
+  { icon: 'fa-award',  label: '3' },
+];
+
 let leaderboardData = [];
-let deviceId = generateDeviceId();
+let deviceId = getDeviceId();
 let hasVoted = false;
 let userVote = null;
 
-// توليد معرّف فريد للجهاز
-function generateDeviceId() {
+function getDeviceId() {
   let id = localStorage.getItem('deviceId');
   if (!id) {
     id = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -22,189 +25,175 @@ function generateDeviceId() {
   return id;
 }
 
-// تهيئة البيانات
-function initializeLocalData() {
-  const stored = localStorage.getItem('neighborhoodsData');
-  const votesData = localStorage.getItem('votesData') || '{}';
-  
-  if (!stored) {
-    // إنشاء بيانات جديدة بجميع الأصوات = 0
-    neighborhoods.forEach((neighborhood) => {
-      neighborhoodsData[neighborhood] = {
-        name: neighborhood,
-        votes: 0
-      };
-    });
-    saveLocalData();
-  } else {
-    neighborhoodsData = JSON.parse(stored);
+function getRankIcon(index) {
+  if (index < 3) {
+    const { icon } = RANK_ICONS[index];
+    return `<i class="fas ${icon}"></i>`;
   }
-  
-  // التحقق من هل صوّت هذا الجهاز
-  const votes = JSON.parse(votesData);
-  if (votes[deviceId]) {
-    hasVoted = true;
-    userVote = votes[deviceId];
-    updateVoteStatus();
-  }
+  return `<span class="rank-number">${index + 1}</span>`;
 }
 
-// حفظ البيانات محلياً
-function saveLocalData() {
-  localStorage.setItem('neighborhoodsData', JSON.stringify(neighborhoodsData));
-}
-
-// تحميل البيانات عند فتح الصفحة
 document.addEventListener('DOMContentLoaded', () => {
-  initializeLocalData();
+  checkVoteStatus();
   loadLeaderboard();
-  loadNeighborhoodsList();
-  loadStats();
+  populateSelects();
   setupEventListeners();
-  updateVoteButtonState();
-  
-  // تحديث الترتيب كل 2 ثانية
-  setInterval(() => {
-    loadLeaderboard();
-    loadStats();
-  }, 2000);
+
+  setInterval(loadLeaderboard, 5000);
 });
 
-// تحميل الترتيب
-function loadLeaderboard() {
-  try {
-    const sorted = Object.values(neighborhoodsData).sort((a, b) => b.votes - a.votes);
-    leaderboardData = sorted;
-    displayLeaderboard(sorted);
-  } catch (error) {
-    console.error('خطأ في تحميل الترتيب:', error);
+function checkVoteStatus() {
+  const stored = localStorage.getItem('voteRecord');
+  if (stored) {
+    const { deviceId: storedDevice, neighborhood } = JSON.parse(stored);
+    if (storedDevice === deviceId) {
+      hasVoted = true;
+      userVote = neighborhood;
+      updateVoteStatus();
+      updateVoteButtonState();
+    }
   }
 }
 
-// عرض الترتيب
+async function loadLeaderboard() {
+  try {
+    const res = await fetch('/api/votes');
+    if (!res.ok) throw new Error('فشل في جلب البيانات');
+    const data = await res.json();
+    leaderboardData = data;
+    displayLeaderboard(data);
+    updateStats(data);
+  } catch (err) {
+    console.error('خطأ في تحميل الترتيب:', err);
+    const el = document.getElementById('leaderboard');
+    if (el.classList.contains('loading')) {
+      el.innerHTML = '<div class="loading">تعذّر تحميل البيانات، يُرجى تحديث الصفحة</div>';
+    }
+  }
+}
+
 function displayLeaderboard(leaderboard) {
-  const leaderboardElement = document.getElementById('leaderboard');
-  
+  const el = document.getElementById('leaderboard');
   if (!leaderboard || leaderboard.length === 0) {
-    leaderboardElement.innerHTML = '<div class="loading">لا توجد بيانات متوفرة</div>';
+    el.innerHTML = '<div class="loading">لا توجد بيانات متوفرة</div>';
     return;
   }
 
-  leaderboardElement.innerHTML = leaderboard.map((item, index) => {
-    const medals = ['1', '2', '3'];
-    const medal = index < 3 ? medals[index] : `${index + 1}`;
-    const topClass = index < 3 ? `top-${index + 1}` : '';
-    const highlight = userVote === item.name ? ' highlight' : '';
-    
+  el.innerHTML = leaderboard.map((item, index) => {
+    const topClass = index < 3 ? ` top-${index + 1}` : '';
+    const highlight = userVote === item.neighborhood ? ' highlight' : '';
+    const rankDisplay = getRankIcon(index);
+
     return `
-      <div class="leaderboard-item ${topClass}${highlight}">
-        <div class="rank-medal">${medal}</div>
-        <div class="neighborhood-name">${item.name}</div>
-        <div class="vote-count">${item.votes}</div>
+      <div class="leaderboard-item${topClass}${highlight}">
+        <div class="rank-medal">${rankDisplay}</div>
+        <div class="neighborhood-name">${item.neighborhood}</div>
+        <div class="vote-count"><i class="fas fa-vote-yea"></i> ${item.votes}</div>
       </div>
     `;
   }).join('');
 }
 
-// تحميل قائمة الأحياء
-function loadNeighborhoodsList() {
-  populateSelects();
+function updateStats(data) {
+  const totalVotes = data.reduce((sum, item) => sum + item.votes, 0);
+  const totalNeighborhoods = neighborhoods.length;
+  const avgVotes = totalNeighborhoods > 0 ? (totalVotes / totalNeighborhoods).toFixed(1) : '0';
+
+  document.getElementById('totalVotes').textContent = totalVotes;
+  document.getElementById('totalNeighborhoods').textContent = totalNeighborhoods;
+  document.getElementById('avgVotes').textContent = avgVotes;
 }
 
-// ملء القائمات
 function populateSelects() {
   const voteSelect = document.getElementById('voteNeighborhood');
-  
-  // تفريغ القائمة الحالية
   voteSelect.innerHTML = '<option value="">-- اختر الحي --</option>';
-
-  neighborhoods.forEach(neighborhood => {
+  neighborhoods.forEach(name => {
     const option = document.createElement('option');
-    option.value = neighborhood;
-    option.textContent = neighborhood;
+    option.value = name;
+    option.textContent = name;
     voteSelect.appendChild(option);
   });
 }
 
-// إعداد مستمعي الأحداث
 function setupEventListeners() {
-  const voteForm = document.getElementById('voteForm');
-  voteForm.addEventListener('submit', handleVote);
+  document.getElementById('voteForm').addEventListener('submit', handleVote);
 }
 
-// معالج التصويت
 async function handleVote(e) {
   e.preventDefault();
 
   if (hasVoted) {
-    showMessage('لقد صوّت الجهاز الحالي مسبقاً', 'error');
+    showMessage('لقد صوّت هذا الجهاز مسبقاً', 'error');
     return;
   }
 
-  const voteNeighborhood = document.getElementById('voteNeighborhood').value;
-  const submitButton = e.target.querySelector('.btn-vote');
-
-  if (!voteNeighborhood) {
+  const neighborhood = document.getElementById('voteNeighborhood').value;
+  if (!neighborhood) {
     showMessage('يرجى اختيار حي', 'error');
     return;
   }
 
+  const submitButton = e.target.querySelector('.btn-vote');
   submitButton.disabled = true;
-  const originalText = submitButton.innerHTML;
   submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
 
   try {
-    // محاكاة تأخير
-    await new Promise(resolve => setTimeout(resolve, 600));
+    const res = await fetch('/api/votes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId, neighborhood }),
+    });
 
-    // إضافة صوت
-    if (!neighborhoodsData[voteNeighborhood]) {
-      neighborhoodsData[voteNeighborhood] = { name: voteNeighborhood, votes: 0 };
+    const data = await res.json();
+
+    if (res.status === 409) {
+      hasVoted = true;
+      userVote = data.votedFor;
+      localStorage.setItem('voteRecord', JSON.stringify({ deviceId, neighborhood: data.votedFor }));
+      showMessage(`لقد صوّت هذا الجهاز مسبقاً على: ${data.votedFor}`, 'error');
+      updateVoteStatus();
+      updateVoteButtonState();
+      return;
     }
-    neighborhoodsData[voteNeighborhood].votes += 1;
-    saveLocalData();
 
-    // حفظ التصويت للجهاز
+    if (!res.ok) {
+      throw new Error(data.error || 'خطأ في الخادم');
+    }
+
     hasVoted = true;
-    userVote = voteNeighborhood;
-    const votesData = JSON.parse(localStorage.getItem('votesData') || '{}');
-    votesData[deviceId] = voteNeighborhood;
-    localStorage.setItem('votesData', JSON.stringify(votesData));
+    userVote = neighborhood;
+    localStorage.setItem('voteRecord', JSON.stringify({ deviceId, neighborhood }));
 
-    showMessage(`شكراً! تم تصويتك للحي: ${voteNeighborhood}`, 'success');
-    
-    // تحديث الترتيب والإحصائيات
-    loadLeaderboard();
-    loadStats();
+    showMessage(`شكراً! تم تصويتك للحي: ${neighborhood}`, 'success');
     updateVoteStatus();
     updateVoteButtonState();
-
-    // إعادة تعيين النموذج
     document.getElementById('voteForm').reset();
-  } catch (error) {
-    console.error('خطأ في التصويت:', error);
-    showMessage('حدث خطأ في عملية التصويت. حاول مرة أخرى', 'error');
-  } finally {
+    await loadLeaderboard();
+  } catch (err) {
+    console.error('خطأ في التصويت:', err);
+    showMessage(err.message || 'حدث خطأ في عملية التصويت. حاول مرة أخرى', 'error');
     submitButton.disabled = false;
-    submitButton.innerHTML = originalText;
+    submitButton.innerHTML = '<i class="fas fa-check"></i> صوّت الآن';
+  } finally {
+    if (!hasVoted) {
+      submitButton.disabled = false;
+      submitButton.innerHTML = '<i class="fas fa-check"></i> صوّت الآن';
+    }
   }
 }
 
-// تحديث حالة التصويت
 function updateVoteStatus() {
   const voteStatus = document.getElementById('voteStatus');
   const statusText = document.getElementById('voteStatusText');
-  
   if (hasVoted) {
     voteStatus.classList.add('voted');
-    statusText.textContent = `صوتت على: ${userVote}`;
+    statusText.innerHTML = `<i class="fas fa-check-circle"></i> صوتّ على: ${userVote}`;
   } else {
     voteStatus.classList.remove('voted');
-    statusText.textContent = 'لم تصوّت بعد';
+    statusText.innerHTML = '<i class="fas fa-clock"></i> لم تصوّت بعد';
   }
 }
 
-// تحديث حالة زر التصويت
 function updateVoteButtonState() {
   const submitButton = document.querySelector('.btn-vote');
   if (hasVoted) {
@@ -218,79 +207,34 @@ function updateVoteButtonState() {
   }
 }
 
-// عرض الرسائل
 function showMessage(message, type) {
   const messageElement = document.getElementById('voteMessage');
   messageElement.textContent = message;
   messageElement.className = `message ${type}`;
-  
-  setTimeout(() => {
-    messageElement.className = '';
-  }, 5000);
+  setTimeout(() => { messageElement.className = ''; }, 5000);
 }
 
-// تحميل الإحصائيات
-function loadStats() {
-  try {
-    const totalVotes = Object.values(neighborhoodsData).reduce((sum, item) => sum + item.votes, 0);
-    const totalNeighborhoods = neighborhoods.length;
-    const avgVotes = totalNeighborhoods > 0 ? Math.round(totalVotes / totalNeighborhoods * 100) / 100 : 0;
-
-    document.getElementById('totalVotes').textContent = totalVotes;
-    document.getElementById('totalNeighborhoods').textContent = totalNeighborhoods;
-    document.getElementById('avgVotes').textContent = avgVotes.toFixed(1);
-  } catch (error) {
-    console.error('خطأ في جلب الإحصائيات:', error);
-  }
-}
-
-// إعادة تعيين (للمسؤولين فقط)
-function resetVotes() {
-  if (confirm('هل أنت متأكد من إعادة تعيين جميع البيانات؟')) {
-    localStorage.clear();
-    deviceId = generateDeviceId();
-    hasVoted = false;
-    userVote = null;
-    initializeLocalData();
-    loadLeaderboard();
-    loadStats();
-    updateVoteStatus();
-    updateVoteButtonState();
-    showMessage('تم إعادة تعيين جميع البيانات', 'success');
-  }
-}
-
-// مشاركة على تويتر
 function shareOnTwitter() {
-  const topNeighborhood = leaderboardData[0];
-  if (!topNeighborhood) return;
-
-  const text = `حي ${topNeighborhood.name} متصدر ترتيب أحياء سيدي مومن برصيد ${topNeighborhood.votes} صوت!\n\nصوّت الآن: ${window.location.href}`;
+  const top = leaderboardData[0];
+  if (!top) return;
+  const text = `حي ${top.neighborhood} متصدر ترتيب أحياء سيدي مومن برصيد ${top.votes} صوت!\n\nصوّت الآن: ${window.location.href}`;
   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
 }
 
-// مشاركة على فيسبوك
 function shareOnFacebook() {
   window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
 }
 
-// مشاركة على واتس آب
 function shareOnWhatsApp() {
-  const topNeighborhood = leaderboardData[0];
-  if (!topNeighborhood) return;
-
-  const message = `حي ${topNeighborhood.name} متصدر ترتيب أحياء سيدي مومن برصيد ${topNeighborhood.votes} صوت!\n\nصوّت الآن: ${window.location.href}`;
+  const top = leaderboardData[0];
+  if (!top) return;
+  const message = `حي ${top.neighborhood} متصدر ترتيب أحياء سيدي مومن برصيد ${top.votes} صوت!\n\nصوّت الآن: ${window.location.href}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
 }
 
-// نسخ الرابط
 function copyLink() {
   navigator.clipboard.writeText(window.location.href).then(() => {
-    const topNeighborhood = leaderboardData[0];
-    if (topNeighborhood) {
-      showMessage(`تم نسخ الرابط! حي ${topNeighborhood.name} متصدر الترتيب`, 'success');
-    }
-  }).catch(() => {
-    showMessage('فشل نسخ الرابط', 'error');
-  });
+    const top = leaderboardData[0];
+    if (top) showMessage(`تم نسخ الرابط! حي ${top.neighborhood} متصدر الترتيب`, 'success');
+  }).catch(() => showMessage('فشل نسخ الرابط', 'error'));
 }

@@ -163,24 +163,30 @@ header::before {
   color: var(--secondary);
 }
 
-.reset-btn {
-  padding: 10px 20px;
-  background: rgba(239, 68, 68, 0.2);
-  color: var(--danger);
-  border: 2px solid var(--danger);
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
-  transition: all 0.3s ease;
+.live-badge {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 2px solid var(--success);
+  border-radius: 50px;
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
-.reset-btn:hover {
-  background: var(--danger);
-  color: white;
-  transform: scale(1.05);
+.live-badge i {
+  font-size: 10px;
+  animation: blink 1.4s ease-in-out infinite;
+  color: var(--success) !important;
+  -webkit-text-fill-color: var(--success);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
 }
 
 #leaderboard {
@@ -241,32 +247,45 @@ header::before {
 }
 
 .rank-medal {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: bold;
   min-width: 60px;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   background: rgba(99, 102, 241, 0.2);
   border-radius: 50%;
+  color: var(--primary-light);
+  flex-shrink: 0;
+}
+
+.rank-medal .rank-number {
+  font-size: 18px;
+  font-weight: 900;
 }
 
 .leaderboard-item.top-1 .rank-medal {
   background: rgba(251, 191, 36, 0.2);
   color: #fbbf24;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+  font-size: 26px;
 }
 
 .leaderboard-item.top-2 .rank-medal {
   background: rgba(209, 213, 219, 0.2);
   color: #d1d5db;
+  box-shadow: 0 0 15px rgba(209, 213, 219, 0.2);
+  font-size: 23px;
 }
 
 .leaderboard-item.top-3 .rank-medal {
-  background: rgba(217, 119, 6, 0.2);
+  background: rgba(217, 119, 6, 0.15);
   color: #d97706;
+  box-shadow: 0 0 15px rgba(217, 119, 6, 0.2);
+  font-size: 22px;
 }
 
 .neighborhood-name {
@@ -278,15 +297,24 @@ header::before {
 }
 
 .vote-count {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 900;
   color: white;
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  padding: 10px 25px;
+  padding: 10px 20px;
   border-radius: 50px;
-  min-width: 110px;
+  min-width: 100px;
   text-align: center;
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.vote-count i {
+  font-size: 13px;
+  opacity: 0.85;
 }
 
 @keyframes slideIn {
@@ -298,6 +326,11 @@ header::before {
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+.leaderboard-item.highlight {
+  border-left-color: var(--success) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3), 0 10px 30px rgba(16, 185, 129, 0.15) !important;
 }
 
 /* Stats Grid */
