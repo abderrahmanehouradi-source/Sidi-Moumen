@@ -11,10 +11,10 @@
   <header>
     <div class="container">
       <div class="header-content">
-        <div class="logo">🏘️</div>
+        <div class="logo">🌟</div>
         <div class="header-title">
           <h1>ترتيب أحياء سيدي مومن</h1>
-          <p>منصة تفاعلية لتقييم وترتيب أحياء المنطقة</p>
+          <p>منصة تفاعلية عصرية لتقييم وترتيب أحياء المنطقة</p>
         </div>
       </div>
     </div>
@@ -24,15 +24,18 @@
   <main class="container">
     <!-- Stats Grid -->
     <div class="stats-section" id="statsGrid">
-      <div class="stat-card">
+      <div class="stat-card gradient-purple">
+        <div class="stat-icon">🗳️</div>
         <div class="stat-value" id="totalVotes">0</div>
         <div class="stat-label">إجمالي الأصوات</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card gradient-blue">
+        <div class="stat-icon">🏘️</div>
         <div class="stat-value" id="totalNeighborhoods">19</div>
         <div class="stat-label">عدد الأحياء</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card gradient-cyan">
+        <div class="stat-icon">📊</div>
         <div class="stat-value" id="avgVotes">0</div>
         <div class="stat-label">متوسط الأصوات</div>
       </div>
@@ -42,34 +45,35 @@
     <div class="main-content">
       <!-- Leaderboard -->
       <section class="leaderboard-section">
-        <h2 class="section-title">🏆 ترتيب الأحياء الحالي</h2>
+        <div class="section-header">
+          <h2 class="section-title">🏆 ترتيب الأحياء</h2>
+          <button class="reset-btn" onclick="resetVotes()">⟲ إعادة تعيين</button>
+        </div>
         <div id="leaderboard" class="loading">جاري تحميل البيانات...</div>
       </section>
 
       <!-- Vote Form -->
       <aside class="vote-form-section">
-        <h2 class="section-title">🗳️ صوّت الآن</h2>
+        <h2 class="section-title">⭐ صوّت للحي المفضل</h2>
         <div id="voteMessage"></div>
+        
+        <div id="voteStatus" class="vote-status">
+          <p id="voteStatusText">لم تصوّت بعد</p>
+        </div>
+        
         <form id="voteForm">
           <div class="form-group">
-            <label for="residenceNeighborhood">🏠 أنت تسكن في:</label>
-            <select id="residenceNeighborhood" required>
-              <option value="">-- اختر حيك --</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="voteNeighborhood">❤️ صوّت للحي:</label>
+            <label for="voteNeighborhood">💎 اختر حيك المفضل:</label>
             <select id="voteNeighborhood" required>
-              <option value="">-- اختر الحي الذي تريد التصويت له --</option>
+              <option value="">-- اختر الحي --</option>
             </select>
           </div>
 
-          <button type="submit" class="btn-vote">صوّت الآن 🗳️</button>
+          <button type="submit" class="btn-vote">✨ صوّت الآن</button>
         </form>
 
         <!-- Share Section -->
-        <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e5e7eb;">
+        <div class="share-section">
           <h3 class="section-title" style="font-size: 16px;">📢 شارك النتائج</h3>
           <div class="share-buttons">
             <button class="share-btn twitter" onclick="shareOnTwitter()">𝕏</button>
@@ -84,7 +88,7 @@
 
   <!-- Footer -->
   <footer>
-    <p>✨ منصة تفاعلية لأحياء سيدي مومن | صُنعت بـ ❤️ من قبل المجتمع</p>
+    <p>✨ منصة احترافية لأحياء سيدي مومن | صُنعت بـ 💙 من قبل المجتمع</p>
     <p style="margin-top: 10px; font-size: 12px; opacity: 0.8;">© 2026 جميع الحقوق محفوظة</p>
   </footer>
 

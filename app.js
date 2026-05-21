@@ -5,24 +5,47 @@ const neighborhoods = [
   'مبروكة', 'السعادة', 'الشراف', 'الهدى', 'عبير', 'الكرون', 'سيدي مومن القديم'
 ];
 
-// بيانات الأحياء (محلياً)
+// المتغيرات العامة
 let neighborhoodsData = {};
 let leaderboardData = [];
+let deviceId = generateDeviceId();
+let hasVoted = false;
+let userVote = null;
 
-// تهيئة البيانات المحلية
+// توليد معرف فريد للجهاز
+function generateDeviceId() {
+  let id = localStorage.getItem('deviceId');
+  if (!id) {
+    id = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('deviceId', id);
+  }
+  return id;
+}
+
+// تهيئة البيانات
 function initializeLocalData() {
   const stored = localStorage.getItem('neighborhoodsData');
+  const votesData = localStorage.getItem('votesData') || '{}';
   
   if (!stored) {
-    neighborhoods.forEach((neighborhood, index) => {
+    // إنشاء بيانات جديدة بجميع الأصوات = 0
+    neighborhoods.forEach((neighborhood) => {
       neighborhoodsData[neighborhood] = {
         name: neighborhood,
-        votes: Math.floor(Math.random() * 50) + 1
+        votes: 0
       };
     });
     saveLocalData();
   } else {
     neighborhoodsData = JSON.parse(stored);
+  }
+  
+  // التحقق من هل صوّت هذا الجهاز
+  const votes = JSON.parse(votesData);
+  if (votes[deviceId]) {
+    hasVoted = true;
+    userVote = votes[deviceId];
+    updateVoteStatus();
   }
 }
 
@@ -38,12 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
   loadNeighborhoodsList();
   loadStats();
   setupEventListeners();
+  updateVoteButtonState();
   
-  // تحديث الترتيب كل 3 ثوانٍ
+  // تحديث الترتيب كل 2 ثانية
   setInterval(() => {
     loadLeaderboard();
     loadStats();
-  }, 3000);
+  }, 2000);
 });
 
 // تحميل الترتيب
@@ -70,12 +94,13 @@ function displayLeaderboard(leaderboard) {
     const medals = ['🥇', '🥈', '🥉'];
     const medal = medals[index] || `${index + 1}`;
     const topClass = index < 3 ? `top-${index + 1}` : '';
+    const highlight = userVote === item.name ? ' highlight' : '';
     
     return `
-      <div class="leaderboard-item ${topClass}">
+      <div class="leaderboard-item ${topClass}${highlight}">
         <div class="rank-medal">${medal}</div>
         <div class="neighborhood-name">${item.name}</div>
-        <div class="vote-count">${item.votes} 🗳️</div>
+        <div class="vote-count">${item.votes}</div>
       </div>
     `;
   }).join('');
@@ -88,19 +113,16 @@ function loadNeighborhoodsList() {
 
 // ملء القائمات
 function populateSelects() {
-  const residenceSelect = document.getElementById('residenceNeighborhood');
   const voteSelect = document.getElementById('voteNeighborhood');
+  
+  // تفريغ القائمة الحالية
+  voteSelect.innerHTML = '<option value="">-- اختر الحي --</option>';
 
   neighborhoods.forEach(neighborhood => {
-    const option1 = document.createElement('option');
-    option1.value = neighborhood;
-    option1.textContent = neighborhood;
-    residenceSelect.appendChild(option1);
-    
-    const option2 = document.createElement('option');
-    option2.value = neighborhood;
-    option2.textContent = neighborhood;
-    voteSelect.appendChild(option2);
+    const option = document.createElement('option');
+    option.value = neighborhood;
+    option.textContent = neighborhood;
+    voteSelect.appendChild(option);
   });
 }
 
@@ -114,21 +136,25 @@ function setupEventListeners() {
 async function handleVote(e) {
   e.preventDefault();
 
-  const residenceNeighborhood = document.getElementById('residenceNeighborhood').value;
+  if (hasVoted) {
+    showMessage('❌ لقد صوّت الجهاز الحالي مسبقاً', 'error');
+    return;
+  }
+
   const voteNeighborhood = document.getElementById('voteNeighborhood').value;
   const submitButton = e.target.querySelector('.btn-vote');
 
-  if (!residenceNeighborhood || !voteNeighborhood) {
-    showMessage('يرجى اختيار الأحياء', 'error');
+  if (!voteNeighborhood) {
+    showMessage('❌ يرجى اختيار حي', 'error');
     return;
   }
 
   submitButton.disabled = true;
-  submitButton.textContent = 'جاري المعالجة...';
+  submitButton.textContent = '⏳ جاري المعالجة...';
 
   try {
-    // محاكاة التأخير
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // محاكاة تأخير
+    await new Promise(resolve => setTimeout(resolve, 600));
 
     // إضافة صوت
     if (!neighborhoodsData[voteNeighborhood]) {
@@ -137,20 +163,57 @@ async function handleVote(e) {
     neighborhoodsData[voteNeighborhood].votes += 1;
     saveLocalData();
 
-    showMessage('✅ تم التصويت بنجاح! شكراً لك 🎉', 'success');
+    // حفظ التصويت للجهاز
+    hasVoted = true;
+    userVote = voteNeighborhood;
+    const votesData = JSON.parse(localStorage.getItem('votesData') || '{}');
+    votesData[deviceId] = voteNeighborhood;
+    localStorage.setItem('votesData', JSON.stringify(votesData));
+
+    showMessage(`✨ شكراً! تم تصويتك للحي: ${voteNeighborhood}`, 'success');
     
-    // تحديث الترتيب مباشرة
+    // تحديث الترتيب والإحصائيات
     loadLeaderboard();
     loadStats();
+    updateVoteStatus();
+    updateVoteButtonState();
 
     // إعادة تعيين النموذج
     document.getElementById('voteForm').reset();
   } catch (error) {
     console.error('خطأ في التصويت:', error);
-    showMessage('حدث خطأ في عملية التصويت. حاول مرة أخرى', 'error');
+    showMessage('❌ حدث خطأ في عملية التصويت. حاول مرة أخرى', 'error');
   } finally {
     submitButton.disabled = false;
-    submitButton.textContent = 'صوّت الآن 🗳️';
+    submitButton.textContent = '✨ صوّت الآن';
+  }
+}
+
+// تحديث حالة التصويت
+function updateVoteStatus() {
+  const voteStatus = document.getElementById('voteStatus');
+  const statusText = document.getElementById('voteStatusText');
+  
+  if (hasVoted) {
+    voteStatus.classList.add('voted');
+    statusText.textContent = `✅ صوّتت على: ${userVote}`;
+  } else {
+    voteStatus.classList.remove('voted');
+    statusText.textContent = 'لم تصوّت بعد';
+  }
+}
+
+// تحديث حالة زر التصويت
+function updateVoteButtonState() {
+  const submitButton = document.querySelector('.btn-vote');
+  if (hasVoted) {
+    submitButton.disabled = true;
+    submitButton.textContent = '🔒 صوتك محفوظ';
+    submitButton.style.opacity = '0.6';
+  } else {
+    submitButton.disabled = false;
+    submitButton.textContent = '✨ صوّت الآن';
+    submitButton.style.opacity = '1';
   }
 }
 
@@ -170,13 +233,29 @@ function loadStats() {
   try {
     const totalVotes = Object.values(neighborhoodsData).reduce((sum, item) => sum + item.votes, 0);
     const totalNeighborhoods = neighborhoods.length;
-    const avgVotes = totalNeighborhoods > 0 ? Math.round(totalVotes / totalNeighborhoods * 10) / 10 : 0;
+    const avgVotes = totalNeighborhoods > 0 ? Math.round(totalVotes / totalNeighborhoods * 100) / 100 : 0;
 
     document.getElementById('totalVotes').textContent = totalVotes;
     document.getElementById('totalNeighborhoods').textContent = totalNeighborhoods;
-    document.getElementById('avgVotes').textContent = avgVotes;
+    document.getElementById('avgVotes').textContent = avgVotes.toFixed(1);
   } catch (error) {
     console.error('خطأ في جلب الإحصائيات:', error);
+  }
+}
+
+// إعادة تعيين (للمسؤولين فقط)
+function resetVotes() {
+  if (confirm('⚠️ هل أنت متأكد من إعادة تعيين جميع البيانات؟')) {
+    localStorage.clear();
+    deviceId = generateDeviceId();
+    hasVoted = false;
+    userVote = null;
+    initializeLocalData();
+    loadLeaderboard();
+    loadStats();
+    updateVoteStatus();
+    updateVoteButtonState();
+    showMessage('✅ تم إعادة تعيين جميع البيانات', 'success');
   }
 }
 
