@@ -1,0 +1,156 @@
+{
+  "version": "8",
+  "dialect": "postgres",
+  "id": "40ee8fb4-8e08-4fa0-a0b3-8cc14a34f929",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "ddl": [
+    {
+      "isRlsEnabled": false,
+      "name": "device_votes",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "neighborhood_votes",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "device_votes"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "device_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "device_votes"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "neighborhood",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "device_votes"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "voted_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "device_votes"
+    },
+    {
+      "type": "serial",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "neighborhood_votes"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "neighborhood",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "neighborhood_votes"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "votes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "neighborhood_votes"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "device_votes_pkey",
+      "schema": "public",
+      "table": "device_votes",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "neighborhood_votes_pkey",
+      "schema": "public",
+      "table": "neighborhood_votes",
+      "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "device_id"
+      ],
+      "nullsNotDistinct": false,
+      "name": "device_votes_device_id_key",
+      "schema": "public",
+      "table": "device_votes",
+      "entityType": "uniques"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "neighborhood"
+      ],
+      "nullsNotDistinct": false,
+      "name": "neighborhood_votes_neighborhood_key",
+      "schema": "public",
+      "table": "neighborhood_votes",
+      "entityType": "uniques"
+    }
+  ],
+  "renames": []
+}
